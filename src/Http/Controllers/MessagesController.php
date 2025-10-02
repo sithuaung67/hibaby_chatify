@@ -7,7 +7,7 @@ use App\Models\Customer;
 use App\Models\User as Admin;
 use App\Models\FcmTokenKey;
 use Illuminate\Support\Str;
-use App\Models\Customer as User;
+use App\Models\User as User;
 use Illuminate\Http\Request;
 use App\Models\ChMessage as Message;
 use Illuminate\Http\JsonResponse;
@@ -190,11 +190,6 @@ class MessagesController extends Controller
             $messages[] = Chatify::messageCard($messageData);
         }
 
-        // send notification
-        if (!empty($messages)) {
-            $this->sendPushNotification("New Message!", $request['message'], $request['id']);
-        }
-
         return Response::json([
             'status'  => '200',
             'error'   => $error,
@@ -266,18 +261,18 @@ class MessagesController extends Controller
     public function getContacts(Request $request)
     {
         // get all users that received/sent message from/to [Auth user]
-        $users = Message::join('customers',  function ($join) {
-            $join->on('ch_messages.from_id', '=', 'customers.id')
-                ->orOn('ch_messages.to_id', '=', 'customers.id');
+        $users = Message::join('users',  function ($join) {
+            $join->on('ch_messages.from_id', '=', 'users.id')
+                ->orOn('ch_messages.to_id', '=', 'users.id');
         })
             ->where(function ($q) {
                 $q->where('ch_messages.from_id', auth('web')->user()->id)
                     ->orWhere('ch_messages.to_id', auth('web')->user()->id);
             })
             // ->where('customers.id','!=',auth('web')->user()->id)
-            ->select('customers.*', DB::raw('MAX(ch_messages.created_at) max_created_at'))
+            ->select('users.*', DB::raw('MAX(ch_messages.created_at) max_created_at'))
             ->orderBy('max_created_at', 'desc')
-            ->groupBy('customers.id')
+            ->groupBy('users.id')
             ->paginate($request->per_page ?? $this->perPage);
 
         $usersList = $users->items();
@@ -525,69 +520,3 @@ class MessagesController extends Controller
         ], 200);
     }
 
-    public function sendPushNotification($title, $message, $customerId = null, $imgUrl = null)
-    {
-        $credentialsFilePath = $_SERVER['DOCUMENT_ROOT'] . '/assets/firebase/fcm-server-key.json';
-        $client = new Google_Client();
-        $client->setAuthConfig($credentialsFilePath);
-        $client->addScope('https://www.googleapis.com/auth/firebase.messaging');
-        $client->refreshTokenWithAssertion();
-        $token = $client->getAccessToken();
-        $access_token = $token['access_token'];
-        $project_id = env('APP_FCM_PROJECT_ID');
-
-        $url = "https://fcm.googleapis.com/v1/projects/".$project_id."/messages:send";        
-        // Fetch user's FCM tokens
-        $fcmTokens = FcmTokenKey::where('customer_id', $customerId)
-        ->orderBy('id', 'desc')
-        ->pluck('fcm_token_key');
-
-        $notifications = [
-            'title' => $title,
-            'body' => $message,
-        ];
-
-        $dataPayload = [
-            'message_id' => "1"
-        ];
-
-        if ($imgUrl) {
-            $notifications['image'] = $imgUrl;
-        }
-
-        if ($fcmTokens) {
-            foreach ($fcmTokens as $fcmKey) {
-                $data = [
-                    'token' => $fcmKey,
-                    'notification' => $notifications,
-                    'data'         => $dataPayload,
-                    'apns' => [
-                        'headers' => [
-                            'apns-priority' => '10',
-                        ],
-                        'payload' => [
-                            'aps' => [
-                                'sound' => 'default',
-                            ]
-                        ],
-                    ],
-                    'android' => [
-                        'priority' => 'high',
-                        'notification' => [
-                            'sound' => 'default',
-                        ]
-                    ],
-                ];
-
-                $response = Http::withHeaders([
-                    'Authorization' => "Bearer $access_token",
-                    'Content-Type' => "application/json"
-                ])->post($url, [
-                    'message' => $data
-                ]);
-
-                return true;
-            }
-        }
-    }
-}
