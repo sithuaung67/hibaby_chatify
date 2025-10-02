@@ -160,6 +160,7 @@ class ChatifyMessenger
             'id' => $msg->id,
             'from_id' => $msg->from_id,
             'to_id' => $msg->to_id,
+            'product_id' => $msg->product_id,
             'message' => $msg->body,
             'attachment' => (object) [
                 'file' => $attachment,
@@ -210,15 +211,24 @@ class ChatifyMessenger
      * @param array $data
      * @return Message
      */
-    public function newMessage($data)
+     public function newMessage($data)
     {
         $message = new Message();
         $message->from_id = $data['from_id'];
         $message->to_id = $data['to_id'];
         $message->body = $data['body'];
         $message->sent_by = $data['sent_by'];
-        $message->attachment = $data['attachment'];
+        
+        if(isset($data['attachment'])) {
+            $message->attachment = $data['attachment'];
+        }
+
+        if(isset($data['product_id'])) {
+            $message->product_id = $data['product_id'];
+        }
+
         $message->save();
+
         return $message;
     }
 
