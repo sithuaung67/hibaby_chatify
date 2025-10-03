@@ -1,19 +1,3 @@
-{{-- -------------------- Saved Messages -------------------- --}}
-@if($get == 'saved')
-    {{-- <table class="messenger-list-item" data-contact="{{ Auth::user()->id }}" data-model="User">
-        <tr data-action="0">
-            <td>
-            <div class="saved-messages avatar av-m">
-                <span class="far fa-bookmark"></span>
-            </div>
-            </td>
-            <td>
-                <p data-id="{{ Auth::user()->id }}" data-type="user">Saved Messages <span>You</span></p>
-                <span>Save messages secretly</span>
-            </td>
-        </tr>
-    </table> --}}
-@endif
 
 {{-- -------------------- Contact list -------------------- --}}
 @if($get == 'users' && !!$lastMessage)
