@@ -136,11 +136,10 @@ $senderColor = $messenger_color ? $messenger_color : Chatify::getFallbackColor()
     padding: 6px 10px;
     border-radius: 8px;
 }
-.product-thumb {
-    width: 50px;
-    height: 50px;
+.product-thumb-wide {
+    width: 400px;
+    height: 300px;
     border-radius: 6px;
-    object-fit: cover;
 }
 .product-details {
     font-size: 14px;
