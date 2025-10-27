@@ -498,6 +498,6 @@ class ChatifyMessenger
      */
     public function getAttachmentUrl($attachment_name)
     {
-        return asset('image/public/'.config('chatify.attachments.folder') . '/' . $attachment_name);
+        return asset('storage/'.config('chatify.attachments.folder') . '/' . $attachment_name);
     }
 }
